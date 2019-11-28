@@ -1,9 +1,13 @@
 import os
 import subprocess
+import json
+import re
+import select_utils
+import project_utils
+import misc_utils
 
-dbname = ""
 while(True):
-    query = input("shell>").lower()
+    query = input("shell> ").lower()
     
     query_list = query.split()
 
@@ -11,33 +15,57 @@ while(True):
         break
 
     elif(query_list[0] == "create" and query_list[1] == "db"):
-        cmd = f"hadoop fs -mkdir -p /hive_test/{query_list[2]}"
-        os.system(cmd)
+        # Check if database already exists
+        check = misc_utils.isDbExists(f"/hive_test/{query_list[2]}")
+
+        if not check:
+            # Create directory on HDFS
+            cmd = f"hadoop fs -mkdir -p /hive_test/{query_list[2]}"
+            os.system(cmd)
+        else:
+            print(f"{query_list[2]} already exists")
+        
 
     elif(query_list[0] == "load" and query_list[2] == "as"):
-        if dbname == query_list[1].split('/')[0]:
-            path = f"/hive_test/{query_list[1]}"
+
+        # Path to the database
+        path = f"/hive_test/{query_list[1]}"
+        table = query_list[1].split('/')[1]
+        db = query_list[1].split('/')[0]
+        check = misc_utils.isFileExists(path)
+
+        if path:
+            # Dictionary and a temporary file for storing the schema before
+            # putting it onto HDFS
+            schemaDict = {}
+            schemaFile = open(f"schema_{table}.json", "w+")
             schemaStr = ""
+
             for i in range(3, len(query_list)):
                 schemaStr += query_list[i]
             schemaList = schemaStr.split(",")
-            schemaFile = open(f"{query_list[1].split('/')[1]}_schema.txt", "w+")
-            for i in schemaList:
-                name, datatype = i.split(":")
-                schemaFile.write("%s:%s\n" % (name, datatype))
+            
+            for i in range(len(schemaList)):
+                name, datatype = schemaList[i].split(":")
+                schemaDict[name] = [i, datatype]
+
+            # Jsonify the dictionary and dump it onto the file
+            jsonDict = json.dumps(schemaDict)
+            schemaFile.write(jsonDict)
             schemaFile.close()
-            cmd = f"hadoop fs -put ./{query_list[1].split('/')[1]}_schema.txt /hive_test/{query_list[1].split('/')[0]}/"
+
+            # Put the schema onto HDFS and remove the temporary file
+            cmd = f"hadoop fs -put ./schema_{table}.json /hive_test/{db}/"
             os.system(cmd)
-
-
-    elif(query_list[0] == "use"):
-        cmd = f"hadoop fs -test -d /hive_test/{query_list[1]};echo $?"
-        check = subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE).communicate()
-        if '1' not in str(check):
-            dbname = query_list[1]
+            os.system(f"rm -f ./schema_{table}.json")        
         else:
-            dbname = ""
-            print(f"{query_list[1]} is not a database")
+            print("File does not exist")
+
+    elif(query_list[0] == "select"):
+        if(len(re.findall("where", query)) == 1):
+            select_utils.run(query)
+        else:
+            project_utils.run(query)
 
     else:
         print("Command unrecognizable")
