@@ -10,7 +10,7 @@ def run(query):
     projectCols = query[6:endCols].strip()
     
     code = 0
-
+    
     if(("max(" in projectCols) or ("min(" in projectCols)):
         if("max(" in projectCols):
             code = 1
@@ -49,7 +49,14 @@ def run(query):
                     colIndexes.append(schema[col.strip()][0])
 
         mapper = open("mapper.py", "w")
-        misc_utils.write_mapper(colIndexes, mapper)
+        if(len(re.findall("where", query)) == 1):
+            
+            #have to parse query to get condition
+                       
+            write_map_select(colIndexes, condition, mapper)
+        
+        else:
+            write_map_project(colIndexes, mapper)
 
         reducer = open("reducer.py", "w")
         misc_utils.write_reducer(code, reducer)
