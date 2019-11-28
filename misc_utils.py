@@ -44,12 +44,37 @@ def write_red_identity(reducer):
     reducer.close()
     
 def write_red_max(reducer):
-    pass
+    
+    reducer.write("\tif var == None:")
+    reducer.write("\t\tvar = line")
+    reducer.write("\telse:")
+    reducer.write("\t\tif line > var:")
+    reducer.write("\t\t\tvar = line")
+    reducer.write("print(var)")
+    reducer.close()
+
+def write_red_min(reducer):
+    
+    reducer.write("\tif var == None:")
+    reducer.write("\t\tvar = line")
+    reducer.write("\telse:")
+    reducer.write("\t\tif line < var:")
+    reducer.write("\t\t\tvar = line")
+    reducer.write("print(var)")
+    reducer.close()
+
+def write_red_count(reducer):
+
+    reducer.write("\tcount = count + 1")
+    reducer.write("print(count)")
+    reducer.close()
 
 def write_reducer(code, reducer):
 
     reducer.write("#!/usr/bin/python3\n")
     reducer.write("import sys\n")
+    reducer.write("var = None")
+    reducer.write("count = 0")
     reducer.write("for line in sys.stdin:\n")
 
     if code == 0:
