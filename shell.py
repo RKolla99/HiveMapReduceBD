@@ -62,10 +62,7 @@ while(True):
             print("File does not exist")
 
     elif(query_list[0] == "select"):
-        if(len(re.findall("where", query)) == 1):
-            select_utils.run(query)
-        else:
-            project_utils.run(query)
+        project_utils.run(query)
 
     else:
         print("Command unrecognizable")
