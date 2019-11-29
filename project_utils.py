@@ -9,18 +9,28 @@ def run(query):
 
     endCols = re.search("from", query).start()
     projectCols = query[6:endCols].strip()
+    projectForPrint = projectCols
     
     code = 0
     
-    if(("max(" in projectCols) or ("min(" in projectCols)):
-        if("max(" in projectCols):
-            code = 1
-        else:
-            code = 2
-        projectCols = projectCols[4:].strip(")")
-    if("count(" in projectCols):
-        code = 3
-        projectCols = projectCols[6:].strip(")")
+    if(("max(" in projectCols) or ("min(" in projectCols) or ("count(" in projectCols)):
+        code = 1
+        aggCols = projectCols.split(',')
+        projectCols = ""
+        codeList = []
+        for i in aggCols:
+            i = i.strip()
+            if("max(" in i):
+                codeList.append(1)
+                projectCols += i[4:].strip(")") + ","
+            elif("min(" in i):
+                codeList.append(2)
+                projectCols += i[4:].strip(")") + ","
+            else:
+                codeList.append(3)
+                projectCols += i[6:].strip(")") + ","
+
+        projectCols = projectCols.strip(",")
     
     if "where" in query:
         start_where = re.search("where", query).start()
@@ -41,20 +51,17 @@ def run(query):
         with open(f"./{ufolder}/schema_{table.split('/')[1]}.json", "r") as f:
             schema = json.load(f)
 
+    
         colList = projectCols.split(',')
 
-        if colList[0].strip() == '*':
-            for i in schema.values():
-                colIndexes.append(i[0])
-
-        else:
-            for col in colList:
-                if col.strip() not in schema:
-                    print("Invalid column name")
-                    return
-                else:
-                    colIndexes.append(schema[col.strip()][0])
-
+        for col in colList:
+            if col.strip() == '*':
+                colIndexes.append(0)
+            elif col.strip() not in schema:
+                print("Invalid column name")
+                return
+            else:
+                colIndexes.append(schema[col.strip()][0])
 
         m_filename = "mapper_" + str(uuid.uuid4().hex) + ".py"
         mapper = open(m_filename, "w")
@@ -87,9 +94,15 @@ def run(query):
 
         r_filename = "reducer_" + str(uuid.uuid4().hex) + ".py"
         reducer = open(r_filename, "w")
-        misc_utils.write_reducer(code, reducer, projectCols)
+
+        if(code == 0):
+            misc_utils.write_red_identity(reducer)
+        else:
+            misc_utils.write_red_aggregate(codeList, reducer)
 
         outputdir = "output" + str(uuid.uuid4().hex)
+
+        print(projectForPrint)
 
         runcmd = f"hadoop jar /home/hduser/hadoop/share/hadoop/tools/lib/hadoop-streaming-3.2.0.jar -mapper {m_filename} -reducer {r_filename} -input /hive_test/{table.split('/')[0]}/input -output /hive_test/{table.split('/')[0]}/{outputdir}"
 
@@ -109,8 +122,3 @@ def run(query):
 
     else:
         print("Table does not exist")
-
-
-    
-
-

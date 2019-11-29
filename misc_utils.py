@@ -84,51 +84,67 @@ def write_check_reducer(reducer):
 
 def write_red_identity(reducer):
 
-    reducer.write("\tprint(line)")    
+    reducer.write("#!/usr/bin/python3\n")
+    reducer.write("import sys\n")
+    reducer.write("var = None\n")
+    reducer.write("count = 0\n")
+    reducer.write("for line in sys.stdin:\n")
+    reducer.write("\tprint(line)\n")    
     reducer.close()
     
-def write_red_max(reducer):
+def write_red_max(col, reducer):
     
+    reducer.write("var = None\n")
+    reducer.write("for line in infile:\n")
+    reducer.write(f"\tline = line.split(',')[{col}]\n")
     reducer.write("\tline = line.strip()\n")
     reducer.write("\tif var == None:\n")
     reducer.write("\t\tvar = line\n")
     reducer.write("\telse:\n")
     reducer.write("\t\tif line > var:\n")
     reducer.write("\t\t\tvar = line\n")
-    reducer.write("print(var)\n")
-    reducer.close()
+    reducer.write("l.append(var)\n")
 
-def write_red_min(reducer):
+def write_red_min(col, reducer):
     
+    reducer.write("var = None\n")
+    reducer.write("for line in infile:\n")
+    reducer.write(f"\tline = line.split(',')[{col}]\n")
     reducer.write("\tline = line.strip()\n")
     reducer.write("\tif var == None:\n")
     reducer.write("\t\tvar = line\n")
     reducer.write("\telse:\n")
     reducer.write("\t\tif line < var:\n")
     reducer.write("\t\t\tvar = line\n")
-    reducer.write("print(var)\n")
-    reducer.close()
+    reducer.write("l.append(var)\n")
 
-def write_red_count(reducer):
+def write_red_count(col, reducer):
 
+    reducer.write("count = 0\n")
+    reducer.write("for line in infile:\n")
     reducer.write("\tline = line.strip()\n")
     reducer.write("\tcount = count + 1\n")
-    reducer.write("print(count)\n")
-    reducer.close()
+    reducer.write("l.append(count)\n")
 
-def write_reducer(code, reducer, headers):
+def write_red_aggregate(codeList, reducer):
 
     reducer.write("#!/usr/bin/python3\n")
     reducer.write("import sys\n")
-    reducer.write("var = None\n")
-    reducer.write("count = 0\n")
-    reducer.write("for line in sys.stdin:\n")
+    reducer.write("l=[]\n")
+    reducer.write("infile = sys.stdin.readlines()\n")
 
-    if code == 0:
-        write_red_identity(reducer)
-    elif code == 1:
-        write_red_max(reducer)
-    elif code == 2:
-        write_red_min(reducer)
-    else:
-        write_red_count(reducer)
+    i = 0
+    while(i < len(codeList)):
+        if codeList[i] == 1:
+            write_red_max(i, reducer)
+        
+        elif codeList[i] == 2:
+            write_red_min(i, reducer)
+        
+        else:
+            write_red_count(i, reducer)
+        i = i + 1
+
+    reducer.write("print(*l, sep = ',')\n")
+    reducer.close()
+
