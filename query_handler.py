@@ -3,7 +3,7 @@ import subprocess
 import re
 import json
 import uuid
-import misc_utils
+import MR_utils
 
 def run(query):
 
@@ -22,13 +22,22 @@ def run(query):
             i = i.strip()
             if("max(" in i):
                 codeList.append(1)
-                projectCols += i[4:].strip(")") + ","
+                if i[4:].strip(")") == '*':
+                    projectCols += str(list(schema.keys())[0]) + ","
+                else:
+                    projectCols += i[4:].strip(")") + ","
             elif("min(" in i):
                 codeList.append(2)
-                projectCols += i[4:].strip(")") + ","
+                if i[4:].strip(")") == '*':
+                    projectCols += str(list(schema.keys())[0]) + ","
+                else:
+                    projectCols += i[4:].strip(")") + ","
             else:
                 codeList.append(3)
-                projectCols += i[6:].strip(")") + ","
+                if i[4:].strip(")") == '*':
+                    projectCols += str(list(schema.keys())[0]) + ","
+                else:
+                    projectCols += i[6:].strip(")") + ","
 
         projectCols = projectCols.strip(",")
     
@@ -38,7 +47,7 @@ def run(query):
     else:
         table = query[endCols + 4:].strip()
     schemaFile = f"/hive_test/{table.split('/')[0]}/schema_{table.split('/')[1]}.json"
-    check = misc_utils.isFileExists(schemaFile)
+    check = MR_utils.isFileExists(schemaFile)
 
     if check:
         
@@ -56,7 +65,8 @@ def run(query):
 
         for col in colList:
             if col.strip() == '*':
-                colIndexes.append(0)
+                for i, j in schema.items():
+                    colIndexes.append(schema[i][0])
             elif col.strip() not in schema:
                 print("Invalid column name")
                 return
@@ -83,10 +93,10 @@ def run(query):
             condition = condition.replace("=", "==")
             condition = condition.replace("*", "=")
 
-            misc_utils.write_map_select(colIndexes, condition.strip(), mapper)
+            MR_utils.write_map_select(colIndexes, condition.strip(), mapper)
 
         elif(len(re.findall("where", query)) == 0):
-            misc_utils.write_map_project(colIndexes, mapper)
+            MR_utils.write_map_project(colIndexes, mapper)
 
         else:
             print("Command unrecognizable")
@@ -96,13 +106,20 @@ def run(query):
         reducer = open(r_filename, "w")
 
         if(code == 0):
-            misc_utils.write_red_identity(reducer)
+            MR_utils.write_red_identity(reducer)
         else:
-            misc_utils.write_red_aggregate(codeList, reducer)
+            MR_utils.write_red_aggregate(codeList, reducer)
 
         outputdir = "output" + str(uuid.uuid4().hex)
 
-        print(projectForPrint)
+        if projectForPrint.strip() == '*':
+            for i in schema.keys():
+                if i == list(schema.keys())[len(list(schema.keys())) - 1]:
+                    print(i)
+                else:
+                    print(i + ",", end = "")
+        else:
+            print(projectForPrint)
 
         runcmd = f"hadoop jar /home/hduser/hadoop/share/hadoop/tools/lib/hadoop-streaming-3.2.0.jar -mapper {m_filename} -reducer {r_filename} -input /hive_test/{table.split('/')[0]}/input -output /hive_test/{table.split('/')[0]}/{outputdir}"
 

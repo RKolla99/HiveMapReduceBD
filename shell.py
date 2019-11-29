@@ -5,9 +5,8 @@ import subprocess
 import json
 import re
 import uuid
-import select_utils
-import project_utils
-import misc_utils
+import query_handler
+import MR_utils
 
 while(True):
     query = input("shell> ").lower()
@@ -19,7 +18,7 @@ while(True):
 
     elif(query_list[0] == "create" and query_list[1] == "database"):
         # Check if database already exists
-        check = misc_utils.isDbExists(f"/hive_test/{query_list[2]}")
+        check = MR_utils.isDbExists(f"/hive_test/{query_list[2]}")
 
         if not check:
             # Create directory on HDFS
@@ -35,7 +34,7 @@ while(True):
         path = f"/hive_test/{query_list[1]}"
         table = query_list[1].split('/')[1]
         db = query_list[1].split('/')[0]
-        check = misc_utils.isFileExists(path)
+        check = MR_utils.isFileExists(path)
 
         if path:
             # Dictionary and a temporary file for storing the schema before
@@ -58,11 +57,11 @@ while(True):
 
             check_mapper = "check_mapper_" + str(uuid.uuid4().hex) + ".py"
             cmapper = open(check_mapper, "w+")
-            misc_utils.write_check_mapper(intList, cmapper, len(schemaDict))
+            MR_utils.write_check_mapper(intList, cmapper, len(schemaDict))
 
             check_reducer = "check_reducer_" + str(uuid.uuid4().hex) + ".py"
             creducer = open(check_reducer, "w+")
-            misc_utils.write_check_reducer(creducer)
+            MR_utils.write_check_reducer(creducer)
 
             outputdir = "output" + str(uuid.uuid4().hex)
 
@@ -102,7 +101,7 @@ while(True):
 
     elif(query_list[0] == "select"):
         if((query_list.count("select") == 1) and (query_list.count("from") == 1)):
-            project_utils.run(query)
+            query_handler.run(query)
         else:
             print("Command unrecognizable")
 
