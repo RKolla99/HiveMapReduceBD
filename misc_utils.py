@@ -30,11 +30,12 @@ def write_map_select(indexList, condition, mapper):
     mapper.write("for line in infile:\n")
     mapper.write("\tline = line.strip()\n")
     mapper.write("\trowValues = line.split(',')\n")
+    # mapper.write("\ttry:\n")
     mapper.write(f"\tif({condition}):\n")
     mapper.write("\t\tprint(")
     for index in range(len(indexList) - 1):        
         mapper.write(f"rowValues[{indexList[index]}], ',' ,")
-    mapper.write(f"rowValues[{indexList[len(indexList) - 1]}])")
+    mapper.write(f"rowValues[{indexList[len(indexList) - 1]}])\n")
     mapper.close()
 
 def write_map_project(indexList, mapper):
@@ -51,6 +52,33 @@ def write_map_project(indexList, mapper):
     mapper.write(f"rowValues[{indexList[len(indexList) - 1]}])")
     mapper.close()
 
+def write_check_mapper(intList, mapper, length):
+
+    mapper.write("#!/usr/bin/python3\n")
+    mapper.write("import sys\n")
+    mapper.write("infile = sys.stdin\n")
+    mapper.write("flag = 1\n")
+    mapper.write("for line in infile:\n")
+    mapper.write("\tline = line.strip()\n")
+    mapper.write("\trowValues = line.split(',')\n")
+    mapper.write(f"\tfor i in {intList}:\n")
+    mapper.write("\t\ttry:\n")
+    mapper.write("\t\t\tint(rowValues[i])\n")
+    mapper.write("\t\texcept ValueError:\n")
+    mapper.write("\t\t\tflag = 0\n\t\t\tbreak\n")
+    mapper.write(f"if len(rowValues) != {length}:\n")
+    mapper.write("\tflag = 0\n")
+    mapper.write("print(flag)")
+    mapper.close()
+
+def write_check_reducer(reducer):
+
+    reducer.write("#!/usr/bin/python3\n")
+    reducer.write("import sys\n")
+    reducer.write("for line in sys.stdin:\n")
+    reducer.write("\tprint(line.strip())")
+    reducer.close()
+
 def write_red_identity(reducer):
 
     reducer.write("\tprint(line)")    
@@ -64,7 +92,7 @@ def write_red_max(reducer):
     reducer.write("\telse:\n")
     reducer.write("\t\tif line > var:\n")
     reducer.write("\t\t\tvar = line\n")
-    reducer.write("print(var)")
+    reducer.write("print(var)\n")
     reducer.close()
 
 def write_red_min(reducer):
@@ -75,14 +103,14 @@ def write_red_min(reducer):
     reducer.write("\telse:\n")
     reducer.write("\t\tif line < var:\n")
     reducer.write("\t\t\tvar = line\n")
-    reducer.write("print(var)")
+    reducer.write("print(var)\n")
     reducer.close()
 
 def write_red_count(reducer):
 
     reducer.write("\tline = line.strip()\n")
     reducer.write("\tcount = count + 1\n")
-    reducer.write("print(count)")
+    reducer.write("print(count)\n")
     reducer.close()
 
 def write_reducer(code, reducer):

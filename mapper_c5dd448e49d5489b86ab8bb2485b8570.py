@@ -1,11 +1,8 @@
 #!/usr/bin/python3
 import sys
-import csv
 infile = sys.stdin
-
 for line in infile:
 	line = line.strip()
 	rowValues = line.split(',')
-	
-    		
-    
+	if(int(rowValues[0])!=1):
+		print(rowValues[1])
