@@ -12,6 +12,25 @@ def run(query):
     projectForPrint = projectCols
     
     code = 0
+
+    if "where" in query:
+        start_where = re.search("where", query).start()
+        table = query[endCols + 4: start_where - 1].strip()
+    else:
+        table = query[endCols + 4:].strip()
+    
+
+    schemaFile = f"/hive_test/{table.split('/')[0]}/schema_{table.split('/')[1]}.json"
+    check = MR_utils.isFileExists(schemaFile)
+
+    ufolder = "schema_" + str(uuid.uuid4().hex)
+    os.system(f"mkdir ./{ufolder}")
+    cmd = f"hadoop fs -get {schemaFile} ./{ufolder}"
+    os.system(cmd)
+
+    with open(f"./{ufolder}/schema_{table.split('/')[1]}.json", "r") as f:
+        schema = json.load(f)
+
     
     if(("max(" in projectCols) or ("min(" in projectCols) or ("count(" in projectCols)):
         code = 1
@@ -23,44 +42,29 @@ def run(query):
             if("max(" in i):
                 codeList.append(1)
                 if i[4:].strip(")") == '*':
-                    projectCols += str(list(schema.keys())[0]) + ","
+                    print("* is not valid for max")
+                    return
                 else:
                     projectCols += i[4:].strip(")") + ","
             elif("min(" in i):
                 codeList.append(2)
                 if i[4:].strip(")") == '*':
-                    projectCols += str(list(schema.keys())[0]) + ","
+                    print("* is not valid for max")
+                    return
                 else:
                     projectCols += i[4:].strip(")") + ","
             else:
                 codeList.append(3)
-                if i[4:].strip(")") == '*':
+                if i[6:].strip(")") == '*':
                     projectCols += str(list(schema.keys())[0]) + ","
                 else:
                     projectCols += i[6:].strip(")") + ","
 
         projectCols = projectCols.strip(",")
     
-    if "where" in query:
-        start_where = re.search("where", query).start()
-        table = query[endCols + 4: start_where - 1].strip()
-    else:
-        table = query[endCols + 4:].strip()
-    schemaFile = f"/hive_test/{table.split('/')[0]}/schema_{table.split('/')[1]}.json"
-    check = MR_utils.isFileExists(schemaFile)
-
     if check:
         
         colIndexes = []
-        ufolder = "schema_" + str(uuid.uuid4().hex)
-        os.system(f"mkdir ./{ufolder}")
-        cmd = f"hadoop fs -get {schemaFile} ./{ufolder}"
-        os.system(cmd)
-
-        with open(f"./{ufolder}/schema_{table.split('/')[1]}.json", "r") as f:
-            schema = json.load(f)
-
-    
         colList = projectCols.split(',')
 
         for col in colList:
