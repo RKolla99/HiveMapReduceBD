@@ -69,8 +69,7 @@ def run(query):
                         condition = condition.replace(valid_col, f"int(rowValues[{col_data[0]}])")
                     else:
                         condition = condition.replace(valid_col, f"str(rowValues[{col_data[0]}])")
-
-
+            
             condition = condition.replace("<=", "<*")
             condition = condition.replace(">=", ">*")
             condition = condition.replace("!=", "!*")
@@ -79,12 +78,16 @@ def run(query):
 
             misc_utils.write_map_select(colIndexes, condition.strip(), mapper)
 
-        else:
+        elif(len(re.findall("where", query)) == 0):
             misc_utils.write_map_project(colIndexes, mapper)
+
+        else:
+            print("Command unrecognizable")
+            return
 
         r_filename = "reducer_" + str(uuid.uuid4().hex) + ".py"
         reducer = open(r_filename, "w")
-        misc_utils.write_reducer(code, reducer)
+        misc_utils.write_reducer(code, reducer, projectCols)
 
         outputdir = "output" + str(uuid.uuid4().hex)
 
@@ -99,7 +102,7 @@ def run(query):
         rm_rm = f"rm -f {m_filename} {r_filename}"
         rm_schema = f"rm -rf ./{ufolder}"
         rm1 = f"hadoop fs -rm -r /hive_test/{table.split('/')[0]}/{outputdir}"
-        #os.system(rm_rm)
+        os.system(rm_rm)
         os.system(rm_schema)
         os.system(rm1)
 

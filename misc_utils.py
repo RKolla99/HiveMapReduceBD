@@ -1,6 +1,6 @@
 import os
 import subprocess
-
+import re
 
 def isDbExists(path):
     
@@ -11,6 +11,7 @@ def isDbExists(path):
         return 1
     else:
         return 0
+
 
 def isFileExists(path):
 
@@ -27,15 +28,17 @@ def write_map_select(indexList, condition, mapper):
     mapper.write("#!/usr/bin/python3\n")
     mapper.write("import sys\n")
     mapper.write("infile = sys.stdin\n")
-    mapper.write("for line in infile:\n")
-    mapper.write("\tline = line.strip()\n")
-    mapper.write("\trowValues = line.split(',')\n")
-    # mapper.write("\ttry:\n")
-    mapper.write(f"\tif({condition}):\n")
-    mapper.write("\t\tprint(")
+    mapper.write("try:\n")
+    mapper.write("\tfor line in infile:\n")
+    mapper.write("\t\tline = line.strip()\n")
+    mapper.write("\t\trowValues = line.split(',')\n")
+    mapper.write(f"\t\tif({condition}):\n")
+    mapper.write("\t\t\tprint(")
     for index in range(len(indexList) - 1):        
         mapper.write(f"rowValues[{indexList[index]}], ',' ,")
     mapper.write(f"rowValues[{indexList[len(indexList) - 1]}])\n")
+    mapper.write("except NameError:\n")
+    mapper.write("\tprint('Invalid where clause')")
     mapper.close()
 
 def write_map_project(indexList, mapper):
@@ -113,7 +116,7 @@ def write_red_count(reducer):
     reducer.write("print(count)\n")
     reducer.close()
 
-def write_reducer(code, reducer):
+def write_reducer(code, reducer, headers):
 
     reducer.write("#!/usr/bin/python3\n")
     reducer.write("import sys\n")

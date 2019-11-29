@@ -100,8 +100,11 @@ while(True):
         else:
             print("File does not exist")
 
-    elif(query_list[0] == "select" and "from" in query):
-        project_utils.run(query)
+    elif(query_list[0] == "select"):
+        if((query_list.count("select") == 1) and (query_list.count("from") == 1)):
+            project_utils.run(query)
+        else:
+            print("Command unrecognizable")
 
     else:
         print("Command unrecognizable")
