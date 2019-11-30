@@ -16,9 +16,12 @@ while(True):
     if(query_list[0] == "exit"):
         break
 
+    # Creating the database
+    # create database $dbname
     elif(query_list[0] == "create" and query_list[1] == "database"):
         # Check if database already exists
-        check = MR_utils.isDbExists(f"/hive_test/{query_list[2]}")
+        path = f"/hive_test/{query_list[2]}"
+        check = MR_utils.isDbExists(path)
 
         if not check:
             # Create directory on HDFS
@@ -27,7 +30,8 @@ while(True):
         else:
             print(f"{query_list[2]} already exists")
         
-
+    # Loading the database with specifying the schema
+    # load $dbname/table_name.csv as $[column:datatype(int, string)]
     elif(query_list[0] == "load" and query_list[2] == "as"):
 
         # Path to the database
@@ -47,6 +51,7 @@ while(True):
                 schemaStr += query_list[i]
             schemaList = schemaStr.split(",")
             
+            # SCHEMA CHECK: Returns Schema does not match the dataset else writes the schema to a file
             intList = []
 
             for i in range(len(schemaList)):
@@ -78,16 +83,17 @@ while(True):
                 print("Schema does not match the dataset")
 
             else:
-                # Jsonify the dictionary and dump it onto the file
+                # Jsonify the schema dictionary and write it to the file
                 jsonDict = json.dumps(schemaDict)
                 schemaFile.write(jsonDict)
                 schemaFile.close()
 
-                # Put the schema onto HDFS and remove the temporary file
+                # Put the schema onto HDFS
                 cmd = f"hadoop fs -put ./schema_{table}.json /hive_test/{db}/"
                 os.system(cmd)
                 os.system(f"hadoop fs -cp /datasets/{table}/{table} /hive_test/{db}/input/")
 
+            # Remove the temporary files and output files
             os.system(f"rm -f ./schema_{table}.json")
 
             rm = f"rm -f {test} {check_mapper} {check_reducer}"
@@ -99,6 +105,7 @@ while(True):
         else:
             print("File does not exist")
 
+    # Select queries with different variations
     elif(query_list[0] == "select"):
         if((query_list.count("select") == 1) and (query_list.count("from") == 1)):
             query_handler.run(query)
