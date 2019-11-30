@@ -49,7 +49,7 @@ def run(query):
             elif("min(" in i):
                 codeList.append(2)
                 if i[4:].strip(")") == '*':
-                    print("* is not valid for max")
+                    print("* is not valid for min")
                     return
                 else:
                     projectCols += i[4:].strip(")") + ","
