@@ -9,19 +9,20 @@ import query_handler
 import MR_utils
 
 while(True):
-    query = input("shell> ").lower()
+    query = input("shell> ")
     
     query_list = query.split()
 
-    if(query_list[0] == "exit"):
+    if(query == ""):
+        continue
+    
+    elif(query_list[0] == "exit"):
         break
 
     # Creating the database
-    # create database $dbname
     elif(query_list[0] == "create" and query_list[1] == "database"):
         # Check if database already exists
-        path = f"/hive_test/{query_list[2]}"
-        check = MR_utils.isDbExists(path)
+        check = MR_utils.isDbExists(f"/hive_test/{query_list[2]}")
 
         if not check:
             # Create directory on HDFS
@@ -31,7 +32,6 @@ while(True):
             print(f"{query_list[2]} already exists")
         
     # Loading the database with specifying the schema
-    # load $dbname/table_name.csv as $[column:datatype(int, string)]
     elif(query_list[0] == "load" and query_list[2] == "as"):
 
         # Path to the database
@@ -41,8 +41,6 @@ while(True):
         check = MR_utils.isFileExists(path)
 
         if path:
-            # Dictionary and a temporary file for storing the schema before
-            # putting it onto HDFS
             schemaDict = {}
             schemaFile = open(f"schema_{table}.json", "w+")
             schemaStr = ""
@@ -51,7 +49,6 @@ while(True):
                 schemaStr += query_list[i]
             schemaList = schemaStr.split(",")
             
-            # SCHEMA CHECK: Returns Schema does not match the dataset else writes the schema to a file
             intList = []
 
             for i in range(len(schemaList)):

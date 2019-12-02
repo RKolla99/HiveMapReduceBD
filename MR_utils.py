@@ -64,14 +64,15 @@ def write_check_mapper(intList, mapper, length):
     mapper.write("for line in infile:\n")
     mapper.write("\tline = line.strip()\n")
     mapper.write("\trowValues = line.split(',')\n")
+    mapper.write(f"\tif len(rowValues) != {length}:\n")
+    mapper.write("\t\tflag = 0\n")
+    mapper.write("\t\tprint(flag)\n")
+    mapper.write("\t\tbreak \n")
     mapper.write(f"\tfor i in {intList}:\n")
     mapper.write("\t\ttry:\n")
     mapper.write("\t\t\tint(rowValues[i])\n")
     mapper.write("\t\texcept ValueError:\n")
     mapper.write("\t\t\tflag = 0\n\t\t\tbreak\n")
-    mapper.write(f"if len(rowValues) != {length}:\n")
-    mapper.write("\tflag = 0\n")
-    mapper.write("print(flag)")
     mapper.close()
 
 def write_check_reducer(reducer):

@@ -134,12 +134,13 @@ def run(query):
         os.system(displaycmd)
 
         rm_rm = f"rm -f {m_filename} {r_filename}"
-        rm_schema = f"rm -rf ./{ufolder}"
         rm1 = f"hadoop fs -rm -r /hive_test/{table.split('/')[0]}/{outputdir}"
         os.system(rm_rm)
-        os.system(rm_schema)
         os.system(rm1)
 
-
+    
     else:
         print("Table does not exist")
+
+    rm_schema = f"rm -rf ./{ufolder}"
+    os.system(rm_schema)
